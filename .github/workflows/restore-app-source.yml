@@ -1,0 +1,43 @@
+name: Restore verified App source
+
+on:
+  push:
+    paths:
+      - "transfer-payload/READY"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reassemble and verify original App.tsx
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const zlib = require('zlib');
+          const crypto = require('crypto');
+          const chunks = Array.from({length: 9}, (_, i) =>
+            fs.readFileSync(`transfer-payload/App.original.${i+1}.b64`, 'utf8').trim()
+          );
+          const gzip = Buffer.from(chunks.join(''), 'base64');
+          const source = zlib.gunzipSync(gzip);
+          const sha = crypto.createHash('sha256').update(source).digest('hex');
+          if (source.length !== 38372) throw new Error(`Unexpected size: ${source.length}`);
+          if (sha !== 'ea1760b23c6357c0a6b1e7069f4c9a470b1e90162c98c666260686929ea53a9e') throw new Error(`SHA-256 mismatch: ${sha}`);
+          fs.writeFileSync('src/App.tsx', source);
+          console.log(`Verified original App.tsx: ${source.length} bytes; SHA-256 ${sha}`);
+          NODE
+      - name: Commit verified source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx
+          git commit -m "Restore verified original App.tsx"
+          git push
