@@ -47,6 +47,7 @@ jobs:
           . <(npx --yes supabase@latest status -o env)
           set +a
           node scripts/test-auth-flow.mjs
+          node scripts/test-core-flows.mjs
 
       - name: Verify concurrent invite creation limit
         env:
