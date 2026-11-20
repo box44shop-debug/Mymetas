@@ -1,0 +1,35 @@
+name: Dependency audit
+
+on:
+  push:
+    branches: [chore/dependency-audit]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve dependency tree
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Run npm audit
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          node -e "const r=require('./npm-audit-report.json'); const v=r.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify(v,null,2)); console.log('Direct/total advisories are detailed in the uploaded report.');"
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mymetas-npm-audit
+          path: npm-audit-report.json
+          if-no-files-found: error
+          retention-days: 14
