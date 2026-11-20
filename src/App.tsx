@@ -65,21 +65,27 @@ function InviteGate({ user }: { user: SessionUser | null }) {
 
 function AcceptInvite({ token }: { token: string }) {
   const navigate = useNavigate();
-  const [message, setMessage] = useState('Validando seu convite...');
+  const [message, setMessage] = useState('Você recebeu um convite para participar de uma meta compartilhada. Confirme abaixo para aceitar.');
   const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    let active = true;
-    async function accept() {
-      if (!supabase) { setFailed(true); setMessage('Não foi possível conectar ao serviço.'); return; }
-      const { error } = await supabase.rpc('accept_goal_invite', { p_token: token });
-      if (!active) return;
-      if (error) { setFailed(true); setMessage(error.message); }
-      else { setMessage('Convite aceito! A meta compartilhada já está disponível no seu espaço.'); }
+  const [accepted, setAccepted] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function accept() {
+    if (!supabase || busy || accepted) return;
+    setBusy(true);
+    setFailed(false);
+    const { error } = await supabase.rpc('accept_goal_invite', { p_token: token });
+    if (error) {
+      setFailed(true);
+      setMessage('Não foi possível aceitar este convite. Ele pode ser inválido, expirado ou já utilizado.');
+    } else {
+      setAccepted(true);
+      setMessage('Convite aceito! A meta compartilhada já está disponível no seu espaço.');
     }
-    void accept();
-    return () => { active = false; };
-  }, [token]);
-  return <main className="pending-access"><Brand/><div className="pending-card"><span className="pending-shield"><Users size={28}/></span><h1>{failed ? 'Não foi possível aceitar' : 'Convite para meta compartilhada'}</h1><p>{message}</p><button className="button button-primary" onClick={()=>navigate('/')}>Ir para minhas metas</button></div></main>;
+    setBusy(false);
+  }
+
+  return <main className="pending-access"><Brand/><div className="pending-card"><span className="pending-shield"><Users size={28}/></span><h1>{failed ? 'Não foi possível aceitar' : accepted ? 'Convite aceito' : 'Convite para meta compartilhada'}</h1><p>{message}</p>{accepted ? <button className="button button-primary" onClick={()=>navigate('/')}>Ir para minhas metas</button> : <><button className="button button-primary" onClick={()=>void accept()} disabled={busy}>{busy ? 'Aceitando convite...' : 'Aceitar convite'}</button><button className="button button-ghost" onClick={()=>navigate('/')} disabled={busy}>Agora não</button></>}</div></main>;
 }
 
 function PasswordRecoveryPage() {
