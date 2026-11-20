@@ -74,15 +74,21 @@ function AcceptInvite({ token }: { token: string }) {
     if (!supabase || busy || accepted) return;
     setBusy(true);
     setFailed(false);
-    const { error } = await supabase.rpc('accept_goal_invite', { p_token: token });
-    if (error) {
+    try {
+      const { error } = await supabase.rpc('accept_goal_invite', { p_token: token });
+      if (error) {
+        setFailed(true);
+        setMessage('Não foi possível aceitar este convite. Ele pode ser inválido, expirado ou já utilizado.');
+      } else {
+        setAccepted(true);
+        setMessage('Convite aceito! A meta compartilhada já está disponível no seu espaço.');
+      }
+    } catch {
       setFailed(true);
-      setMessage('Não foi possível aceitar este convite. Ele pode ser inválido, expirado ou já utilizado.');
-    } else {
-      setAccepted(true);
-      setMessage('Convite aceito! A meta compartilhada já está disponível no seu espaço.');
+      setMessage('Não foi possível concluir a solicitação por instabilidade de conexão. Tente novamente.');
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return <main className="pending-access"><Brand/><div className="pending-card"><span className="pending-shield"><Users size={28}/></span><h1>{failed ? 'Não foi possível aceitar' : accepted ? 'Convite aceito' : 'Convite para meta compartilhada'}</h1><p>{message}</p>{accepted ? <button className="button button-primary" onClick={()=>navigate('/')}>Ir para minhas metas</button> : <><button className="button button-primary" onClick={()=>void accept()} disabled={busy}>{busy ? 'Aceitando convite...' : 'Aceitar convite'}</button><button className="button button-ghost" onClick={()=>navigate('/')} disabled={busy}>Agora não</button></>}</div></main>;
