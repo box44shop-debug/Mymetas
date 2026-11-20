@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install app dependencies
+        run: npm ci
+
       - name: Initialize local Supabase config
         run: npx --yes supabase@latest init
 
