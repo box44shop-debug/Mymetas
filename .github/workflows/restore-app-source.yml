@@ -12,9 +12,9 @@ jobs:
   restore:
     runs-on: ubuntu-latest
     steps:
+      # Checkout credentials are required only for this manually dispatched
+      # workflow's final git push after source verification.
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
