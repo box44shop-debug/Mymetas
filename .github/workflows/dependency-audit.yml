@@ -22,6 +22,10 @@ jobs:
           node-version: 22
       - name: Resolve dependency tree
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Inspect affected dependency versions
+        run: |
+          npm ls glob minimatch workbox-build --all || true
+          node -e "const l=require('./package-lock.json'); for (const [p,v] of Object.entries(l.packages||{})) if (/(^|\\/)node_modules\\/(glob|minimatch|workbox-build)$/.test(p)) console.log(p, v.version)"
       - name: Run npm audit
         run: |
           npm audit --json > npm-audit-report.json || true
