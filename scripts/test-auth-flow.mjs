@@ -95,8 +95,9 @@ for (const email of identities) {
         const detailResponse = await fetch(`${mailpit}/message/${encodeURIComponent(message.ID)}`);
         if (!detailResponse.ok) continue;
         const detail = await detailResponse.json();
+        const recipients = (message.To ?? []).map(recipient => recipient.Address?.toLowerCase());
         const content = `${detail.Text ?? ''}\\n${detail.HTML ?? ''}`.replace(/&amp;/g, '&');
-        if (content.includes('type=recovery') && content.includes(email)) {
+        if (recipients.includes(email) && content.includes('type=recovery')) {
           recoveryMessage = content;
           break;
         }
