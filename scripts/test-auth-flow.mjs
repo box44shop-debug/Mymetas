@@ -81,7 +81,7 @@ for (const email of identities) {
 
     await client.auth.signOut();
     const { error: recoveryError } = await client.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:4173/redefinir-senha'
+      redirectTo: 'http://localhost:3000/redefinir-senha'
     });
     if (recoveryError) throw new Error(`password recovery request failed for ${email}: ${recoveryError.message}`);
 
