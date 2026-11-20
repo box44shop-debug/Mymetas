@@ -16,6 +16,10 @@ begin
     raise exception 'É necessário entrar na conta.';
   end if;
 
+  if not private.is_account_eligible(auth.uid()) then
+    raise exception 'Esta conta ainda não está autorizada a criar convites.';
+  end if;
+
   -- Lock the eligible goal before counting active invites. Concurrent calls
   -- for this same goal wait here and then observe the preceding transaction.
   perform 1
