@@ -1,0 +1,74 @@
+name: Dependency audit
+
+on:
+  push:
+    branches: [chore/dependency-audit]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve dependency tree
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Inspect installed dependency versions
+        run: |
+          node -e "const l=require('./package-lock.json'); for (const [p,v] of Object.entries(l.packages||{})) if (/(^|\\/)node_modules\\/(glob|minimatch|workbox-build)$/.test(p)) console.log(p, v.version)"
+      - name: Inspect patched package versions and constraints
+        run: |
+          echo "Latest glob:"
+          npm view glob version
+          echo "Latest minimatch:"
+          npm view minimatch version
+          echo "workbox-build 7.4.1 glob dependency:"
+          npm view workbox-build@7.4.1 dependencies.glob
+          echo "Latest workbox-build:"
+          npm view workbox-build version
+          echo "Latest vite-plugin-pwa:"
+          npm view vite-plugin-pwa version
+      - name: Test patched transitive versions in an isolated candidate
+        run: |
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.overrides={...(p.overrides||{}),glob:'^14.0.6',minimatch:'^11.0.9'}; fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n')"
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci
+          npm run build
+          npm audit --json > npm-audit-candidate.json || true
+          node -e "const r=require('./npm-audit-candidate.json'); const v=r.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify(v,null,2)); if ((v.total ?? 0) > 0) process.exit(1)"
+      - name: Commit tested dependency overrides and lockfile to audit branch
+        run: |
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "security: override vulnerable transitive dependencies"
+            git push origin HEAD:chore/dependency-audit
+          else
+            echo "No dependency changes to commit."
+          fi
+      - name: Generate complete npm audit report
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          node -e "const r=require('./npm-audit-report.json'); console.log(JSON.stringify({metadata:r.metadata?.vulnerabilities, advisories:Object.entries(r.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,range:v.range,fixAvailable:v.fixAvailable,via:v.via}))},null,2))"
+      - name: Upload diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mymetas-npm-audit-diagnostics
+          path: |
+            npm-audit-report.json
+            package.json
+            package-lock.json
+            npm-audit-candidate.json
+          if-no-files-found: ignore
+          retention-days: 14
