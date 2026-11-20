@@ -1,7 +1,5 @@
 -- Serialize invite creation per goal so concurrent requests cannot bypass
 -- the five-active-invite limit. The goal row lock is held until transaction end.
-begin;
-
 create or replace function public.create_goal_invite(p_goal_id uuid)
 returns text
 language plpgsql
@@ -64,4 +62,3 @@ begin
 end;
 $function$;
 
-commit;
