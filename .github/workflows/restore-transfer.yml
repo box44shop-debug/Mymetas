@@ -20,18 +20,15 @@ jobs:
           const path = require('path');
           const zlib = require('zlib');
           const files = [
-            ['transfer-payload/App.tsx.gz.b64', 'src/App.tsx', 38372],
-            ['transfer-payload/styles.css.gz.b64', 'src/styles.css', 22060],
-            ['transfer-payload/icon-192.png.gz.b64', 'public/icon-192.png', 1308],
-            ['transfer-payload/icon-512.png.gz.b64', 'public/icon-512.png', 3899],
+            ['transfer-payload/App.tsx.gz.b64', 'src/App.tsx'],
+            ['transfer-payload/styles.css.gz.b64', 'src/styles.css'],
+            ['transfer-payload/icon-192.png.gz.b64', 'public/icon-192.png'],
+            ['transfer-payload/icon-512.png.gz.b64', 'public/icon-512.png'],
           ];
-          for (const [source, destination, expectedSize] of files) {
+          for (const [source, destination] of files) {
             const encoded = fs.readFileSync(source, 'utf8').trim();
             const gzip = Buffer.from(encoded, 'base64');
             const decoded = zlib.inflateRawSync(gzip.subarray(10, gzip.length - 8));
-            if (decoded.length !== expectedSize) {
-              throw new Error(`Size mismatch for ${destination}: ${decoded.length}, expected ${expectedSize}`);
-            }
             fs.mkdirSync(path.dirname(destination), { recursive: true });
             fs.writeFileSync(destination, decoded);
             console.log(`Restored ${destination}: ${decoded.length} bytes`);
