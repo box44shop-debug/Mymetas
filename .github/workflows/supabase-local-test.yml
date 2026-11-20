@@ -37,6 +37,11 @@ jobs:
       - name: Apply all migrations to disposable local database
         run: npx --yes supabase@latest db reset
 
+      - name: Verify concurrent invite creation limit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: bash scripts/test-invite-concurrency.sh
+
       - name: Stop local Supabase
         if: always()
         run: npx --yes supabase@latest stop --no-backup || true
