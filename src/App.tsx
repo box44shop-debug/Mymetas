@@ -333,119 +333,98 @@ function ChallengesPanel({ userId }: { userId: string }) {
     const part = byChallenge.get(d.id);
     const isExpired = part?.status === 'expired' || (part?.status === 'active' && new Date(part.ends_at) <= new Date());
     const progress = Math.min(part?.progress ?? 0, d.target_value);
-    const pct = Math.round(progress / d.target_value �nOState('');
-3irget_value �nOSwRight size={16}/></button></==='desafios'eted = pahield rn '/e(part.ends_at) number; coiçeted = pahinumber;;
-  cesafi{user?.st}>">{visibleGoals.map(goaeted = pahieldSTA</span><oals.map(goaeted = pah3>{actn '/e(part.ends_at) number; coi�nquistas</butt20summarxinhas criadas' : 'contribui�iveTab==='compa0summar<, Clo=='compa0sum}b">Meu espaço <span>/<s'eted = pah"><Ta rn '/e(part.ends_at) number; coiçearn; co:pired' || (?active' && :  cons?acieate'');
-3;
-  crthDatal''}</L '/e(part.ends_at) number; coiçCCaixinha    autorizaaco:pired' || (?acPton  s. Pr)} h& :  cons?acE{<TrendingU;
-  cOetiç�lpbar-actions"><
-/h3><p clar?.alue,adas'?'Crid.uration_day}dream-amounbleGoals.map(goaeted = pah_valuean>de R$ 5{ue);
-    const pct }irg{et_value �nOSw}an></div>
-     {tion) => d.(d)bar-actions"><
-/h3><p{ue);.id} >bleGoals.map(goaeted = pah   const/span><o>
-             ch}${ct}%` }tilhadas'?leGoals.map(goaeted = pahspan>Você e${ct}%ed">Esta ett('@')[0]??'Mid.uactive', tru} ic =ar-actions"><seate && clasue);.id} leGoals.map(goaeted = pahspan>Você e<3
-} from 'luidos sã3summPton  cipid.uactive', tru} ic =ar-actio-actiSparaustoar-actions"><}
-/h3><p{ue);(part.ends_at) number; coi�nt size={27}/></darn; pan>Os vde-react';
-i   {loading ta.</dio aplicab==;
-    else!? <div clired' || (?ant size={27}/></darn; pan>O ão ppan>Os vdrt { me="nav-item Outton retuame=unta.</dias metaha uma s= 'gou.'}</p>
- nalorlns((de? <div cl! cons?aprimary button-full" disabled={loading}>{eted = pahtNot)}><Plus sizee.genc fuion) {)}guarde...' efiniti'As s new</Lefiniti's_at?.sts?acIlizadRight sde onde-mail   elsel></sme="go> data.te && <Ctton></in cl}<div claslading-screen"><div className="bner"></div><p>Carregando suas metas..//div> : visible else { stes>
-      <Route path=ng"><div><h2>{activeeted = pas-p }) "t"><div className="weleted = pah3assN"EU SONHO MERECE UM PLANO</span><h1>CRITMO, ="nav-ii-icon"><Targeh2>Peorita.<esafis,rimeiros => nçe e ex2lusiva para  else { me=umbeique tacamin   } elstâ   {sso �=== 'creç�petiç�setS Confixig
-   pósidiv>v>
- /span></ddentifica   </div></plhadas'?leGoals.map(goaachievsName-ontris...<quistas</butt2tas</de R$ 5{ number; ty-stat}an></div>
-     e="nav-capti-actions"><se& <div claert-error">{error} <button onClick={()=>void loadGoals()}>Tentar novamee.genc fu }
+    const pct = Math.round(progress / d.target_value * 100);
+    return <article className={`challenge-card ${part?.status === 'completed' ? 'challenge-complete' : ''}`} key={d.id}>
+      <div className="challenge-card-top"><span className="challenge-icon">{part?.status === 'completed' ? <Trophy size={20}/> : d.metric === 'goals_count' ? <Target size={20}/> : <Flame size={20}/>}</span><span className={`challenge-state ${part?.status === 'completed' ? 'earned' : isExpired ? 'expired' : part ? 'in-progress' : 'optional'}`}>{part?.status === 'completed' ? 'Conquista desbloqueada' : isExpired ? 'Prazo encerrado' : part ? 'Em andamento' : 'Opcional'}</span></div>
+      <h3>{d.title}</h3><p>{d.description}</p>
+      <div className="challenge-target"><strong>{part?.progress ?? 0} / {d.target_value}</strong><span>{metricLabel(d)}</span></div>
+      {part && <><div className="challenge-progress"><span style={{ width: `${pct}%` }}/></div><div className="challenge-foot"><span>{pct}% concluído</span><span>{d.duration_days} dias</span></div></>}
+      {!part && <div className="challenge-foot"><span><CalendarDays size={13}/> Prazo de {d.duration_days} dias</span><span>Sem custo</span></div>}
+      {part?.status === 'completed' ? <div className="earned-note"><CheckCircle2 size={16}/> Você concluiu este desafio!</div> : isExpired ? <div className="earned-note muted-note"><Clock3 size={15}/> O prazo terminou. Você pode continuar com suas metas normalmente.</div> : !part ? <button className="button button-primary challenge-join" onClick={() => void join(d)} disabled={joining !== null}>{joining === d.id ? 'Iniciando...' : 'Aceitar desafio'}</button> : null}
+    </article>;
+  };
 
+  if (loading) return <div className="empty-state"><div className="spinner"/><p>Carregando desafios...</p></div>;
+  return <section className="challenges-panel">
+    <div className="challenge-intro"><div><span className="eyebrow">SEU RITMO, SUA CONQUISTA</span><h2>Pequenos passos, grandes avanços.</h2><p>Escolha desafios simples para manter a constância. Participar é opcional e não exige depósitos nem movimentação de dinheiro.</p></div><div className="achievement-counter"><Trophy size={21}/><strong>{completed.length}</strong><span>conquistas</span></div></div>
+    {error && <div className="alert alert-error">{error} <button onClick={() => void load()}>Tentar novamente</button></div>}
+    {notice && <div className="alert alert-success">{notice}</div>}
+    {active.length > 0 && <><div className="challenge-section-title"><h3>Em andamento</h3><span>{active.length} desafio(s)</span></div><div className="challenge-grid">{definitions.filter(d => active.some(p => p.challenge_id === d.id)).map(card)}</div></>}
+    {available.length > 0 && <><div className="challenge-section-title"><h3>Desafios disponíveis</h3><span>Escolha quando começar</span></div><div className="challenge-grid">{available.map(card)}</div></>}
+    {completed.length > 0 && <><div className="challenge-section-title"><h3>Suas conquistas</h3><span>{completed.length} concluída(s)</span></div><div className="challenge-grid">{definitions.filter(d => byChallenge.get(d.id)?.status === 'completed').map(card)}</div></>}
+    {expired.length > 0 && <><div className="challenge-section-title"><h3>Desafios encerrados</h3><span>O aprendizado continua</span></div><div className="challenge-grid">{definitions.filter(d => expired.some(p => p.challenge_id === d.id)).map(card)}</div></>}
+    <div className="challenge-disclaimer"><ShieldCheck size={16}/><span>Os desafios acompanham apenas registros feitos no Metas.com.br. Não medem saldo bancário, não verificam depósitos e não oferecem prêmios em dinheiro.</span></div>
+  </section>;
+}
+
+function SummaryCard({icon,label,value,hint}:{icon:ReactNode;label:string;value:string;hint:string}) {
+  return <div className="summary-card"><span className="summary-icon">{icon}</span><span className="summary-label">{label}</span><strong>{value}</strong><small>{hint}</small></div>;
+}
+
+function GoalCard({goal,userId,onRefresh}:{goal:Goal;userId:string;onRefresh:()=>void}) {
+  const [adding,setAdding]=useState(false);
+  const [amount,setAmount]=useState('');
+  const [note,setNote]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const [sharing,setSharing]=useState(false);
+  const [shareMessage,setShareMessage]=useState('');
+  const pendingContribution = useRef<{ signature: string; key: string } | null>(null);
+  const percent=progressPercent(goal.saved_cents,goal.target_cents);
+  async function createInvite() {
+    if(!supabase)return;setSharing(true);setShareMessage('');
+    const {data,error:inviteError}=await supabase.rpc('create_goal_invite',{p_goal_id:goal.id});
+    if(inviteError)setShareMessage(inviteError.message);
+    else { const url=`${window.location.origin}/convite/${data}`; try { await navigator.clipboard.writeText(url); setShareMessage('Link copiado! Convide alguém para entrar na sua meta.'); } catch { setShareMessage(url); } }
+    setSharing(false);
   }
-    {activeTab==='desafios' ? <Challen;
-
-  auccess">{message}</div>}
-    <button class;
-
-  a}s' ? <ChallengesPanenha pre> 0.id} >bleGoals.map(goaeted = pahTab==='calue,"'?'NeE{<TrendingUdas'?']??'MigesPanenha pr}  else {(s)ar-actions"><span className="eted = pahalCard ge.get(d.id)?.status ===gesPanesome  const eted = parti's_at?.st))  conieldlarationseate && {=> !byChaenha pre> 0.id} >bleGoals.map(goaeted = pahTab==='calue,"'?'Nee sem comBusy(true)isdas'?']??'Mva para 1>
-    tas e coar-actions"><span className="eted = pahalCard => !byChae conieldlarationseate && { number; ty-state> 0.id} >bleGoals.map(goaeted = pahTab==='calue,"'?'NeSrd iconvencida e man]??'Mi number; ty-stat}ed">Esta ea(s)ar-actions"><span className="eted = pahalCard ge.get(d.id)?.status === 'active' && new Date(byChallenge.ginitions.fie conieldlarationseate && {tive' &enha pre> 0.id} >bleGoals.map(goaeted = pahTab==='calue,"'?'Nee sem coms. Pr)} ha e man]??'MO apl" vao vátaha umaar-actions"><span className="eted = pahalCard ge.get(d.id)?.status ===tive' &esome  const eted = parti's_at?.st))  conieldlarationseate && span className="eted = pahBusclaan>rs valores exibidos sã6 declaraçõ else { mnto.':'Cr{<Tpena/div>
-      nãoiv>voverifica dinh. desafmed>
- salvábanceráo,S Conf   </>}
-m   pósidiv>tS Confofizar iveTêmicon={<   </div></main>
-    {shoassName="e { user: Sessilabel="Obje({3>{a,matBR,').eq(s" /}:{3>{a:{ Link, N;p() {
-pleted'ber; dpleted's" /dpleted}me="brand"><spassName="mountainallet/ield"><ShieldCheck sizeinallet/3>{actn3>{a}b">Meu espaço <span>/<einallet/p() {ctnp() {}b">Meu ese R$ 5{�nOSw}an></div>
- }/></{s" /}{15}/></di = {
-  ider: Sessi} userId(={loa, setEr,    <div }:{{loa:} us;nitionspleted'    <div :mente</binitions] = usad);
-   <Ard);
- ]=ab, setActiveTab] = useStatg><sp  <Arg><sp]=ab, setAc= useState('');
-
-e,progree]=ab, setAc= useState('')
-  cost [erro=setError] = useState('');
-  cons [notice,=ab, setAc= useState('')heck;
-   <ASeck;
- o=setError] = useState('');
-heckera seu   <ASeckera seu ,=ab, setAc= useState(''={28}/>Ctribuiçãon load  <<{auth.halr metric: 'ckeys, setDefietError] = useState('');pib/for=from './lib/foral={g totalTarget l={g  activeGoals FormEvent) {
-    ev);
-    }) {
-  return;
- setError('C.id); s <ASeck;
- defs, p <ASeckera seu r } = await supabit suse.fro   if otice}=nvite', { p_token: t);
-   );
-      if (!{p);
-    d:.id} onRinError.c(   if otice) <ASeckera seu r   if oticeDesafio iniciado. Seu t supaurl=nir-senha`
-    });
-    if (AcceptInviit s}`;  consull);
-  totalSpartliper }).wrptIText(urlor: joSeckera seu r mary bopado ! mpanhem algu cla/></button><muted">nize lse);tegories: joSeckera seu rurlor:}onst byChaSeck;
- doid load(); },f (!supabase) { ddCtribuição(e:ault(); setError('setMessage('');
-  rts] = await Promise.allGoals= todaySaoPaulo (tg><spinError.c(!Goals {cimento.'); returnussName="etJoinoeta.e="o rezerue);
-.id); s}turn;
- setError('C.id); sPromise.allGtribuiçãoDction t';
-import ty(t Promise.allnalorlos dgree> [preeindow.l newl({ usromise.alluth.halr > [JSON. setDeify({efresons,.id} on,lGoals,[pree:lnalorlos dgree).foee:lGtribuiçãoDctiooinError.cod!={28}/>Ctribuição.abel>
- oi po{28}/>Ctribuição.abel>
- .uth.halr >As suth.halr ;
-      }
-={28}/>Ctribuição.abel>
- o
-funuth.halr ,ckeys,crypto. retumUUID.l }    void loa updateError } = aw const { datt supabse.froen:otice}=nvite', { p_token: t dd);
-   Gtribuição(!{p);
-    d:.id} on,p_tg><speGoals:Goals,p_pree:nalorlos dgree)p_ntribuição' :ee:GtribuiçãoDcti)p_ase)poos. y_keyso{28}/>Ctribuição.abel>
- .key    if (erro(en:otice)egar seus desafios. Tente nova');
-     odiv>
-    auto  } elexesafialhou,Sent(true);
-    objetastatsetLoadclass/></buv-mail ubutts antroval_statuo. Seuo{28}/>Ctribuição.abel>
- =l({ u <Arg><spwait progreewait prord);
- doid loa    <div ngeDtanceof Error id: sessiopode esta elexesafios.iris.ro.'ininetDefinitions((dca de PresamLoadclass/></ba');
-     odiv>
-    objet ubuttá-l    setBus} }
-
-  return <className="a"auth-l{16}/></button></==='desafioal=></ield"><leGoals.map(goal=><hieldSTA</span><oals.map(goae{ value-tagctn; label: s)?.nd(c=>came="fs_a.id} e{ valuee(bp() {?? const [}b">Meu espaço <span>/<el=><hyChallctn.id} oeCheckedsafios'?'Desafi':.id} leGoals = activeT?cE{<TrendingU;:.id} leGoalbar-actions"><span className="l=><h'?'"<span className="l=><h'?'-orbi/div></divveTab==='comp35tilhadas'?'Nen.id} h}`;
-iagem dos sonhos</pl=><huration_dayctn.id} uration_day||'Umazo.'}<soa mená g:'Cr    valorbutton-ppan className="l=><hme="fs"EU SONHO}/><//sectionved)} h{15}/></dse R$ 5{or desejadl={g totalTarget)}an></div>
-adas'?leGoals.map(goaalth.-rn>
- "NHO}/></totalTar{15}/></dse R$ 5{or desejadl={g  activeGoals }an></div>
-adas'?adas'?leGoals.map(goarogress-fill" style={{width:'49%'}}></div></div>
-            h}${ib/for}%`className="dreappan className="l=><h'}}></div>pan>Vob>${ib/for.toFixed(0)}%tascion>< h{1beclara�F    m {or desejadarget_ax(0 l={g  activeGoals-l={g totalTarget))bar-actions"><
-/h3>n.id} oeChecked.id}.id} ownnErros = const ccess">{message}</dhecke-pill"><sparimary button-full dd-Gtribuição"button-primary ntar nova);
-    }) {
-}guarde...' heck;
- as</button><butt6 de heck;
- ?'Ge retur><foht sizmpanheartus === 'c={17></sme="go{heckera seu &&ata é necessária para aplica{heckera seu }{15}/></}s' ? <Challengde"><div it={submit}><spaGtribuição-it={me="eyebrow" ddCtribuição}t type="Q/div>
-instruçt { ou?te} onCnt="Valtg><spget.value)} requirrg><spwnimo de 8 caracteres" minLengtEx.: 10</sp" e} onM/${toonvimalmar nova senha<input type="Obt { ddentif(petiç�s)te} onCnt="Valpreeget.value)} requirgreewnimo de 8 caracteres" minLengtEx.: çt { aage);
- mês"e="alert alert-e&&as">{message}</din><fessName="button button-pw"><Link to="/recum-pill"><sparimary utton-primary button-full" onClick={()=ghostio')}>Ver todas <Ard);
- doid lo}>Csta.lcoarem ${activeTab==='desafio()=>setShowCreate(true)}.':'Atualizar senha'} <ArrowRight sizRhallengrsName=7></sme="gossName="on Damar<rimary button-full dd-Gtribuição"b')}>Ver todas <Ard);
- dnha primeira Caixinhing tRhallengrsoals_count' ? Configured
-& <Ctton></in  ider: SessidefaultShared={({ setEr,rtilhadas'} onoid l,} onCre,se);void }:{nitionspleted'rtilhadas'} o?:boolean;} onCre:mente</b;se);void :mente</binitions] = ush}`;,prog}`;,=ab, setAc= useState('')e{ value,proC{ value,=ab, setAl} user value>('oonst [useState('')mo de ,proveTab=,=ab, setAc= useState('')     as Caee]=ab, setAc= useState('')uration_daysas Chation_day]=ab, setAc= useState('')isas'} osas Isas'} o]=ab, setAcrtilhadas'} ouseState('')
-  cost [erro=setError] = useState('');
-  cons [notice,=ab, setAc= useStEvent) {
-    event.prev:ault(); setError('setMessage('');
-  rts] = await Promise.allGoals= todaySaoPaulo (mo de inError.c(!Goals {cimento.'); returnussName="on>
-    <etJoinoe);
-.id); s}turn;
- setError('C{cimento.')var o cadaf (!sue> paranoe);
-.id); s}turn; updateError } = await supse.fro  tionotice}=nvite', { p_tok.order('creefinition.iownnErro: setEr,h}`;:h}`;indow.loe{ value, activeGoals:Goals, active :ee: :ee||l({ duration_day:uration_dayindow.l||l({ d'expireder'),
-  oeChecked:isas'} oRinError.c(  tionotice)egar seus  tionoticeDesafio iniciado. Sese);void (rn <main className="auth-layout"><divfront"></div><divd={tain drA</ role9%'}et-sua�ão"b')Mo sessNa} req{.c(nimo de s =e.abel>
-  Caixin} onCrengeDeLink to="/" classNameivd={tssNamerole9%diamegll sizeivd={="rrorll size={19}tuabypaG;voidcalue,"'?front"></div><divd={tompartilhadas'?O MERECE UM PLANO</span><UMA NOVnav-ii-icon"><Targeh2 rosaG;voidcalue,"'tton><div classNx2lusiDo falt pra1><p>Um esOveTab!=='desafieç� prt-action" onClick={()=>setActições"><Bell')}>Ver t} onCre}l size={19}/>FechbrandXiv className="pageit={s="eyebrow">{signup word" vaurnira <em>te} onCnt="Valp}`;
-et.value)} requirg}`;wnimo de 8 caracteres" minLengtEx.:        <div c/div><sNfalss=>se_axnew-passw0}ar nova senha<input type="p label:a<t,ends={e=>setC{ value(e.target.value)} m{ valuewnimo de 8 cara);
+  async function addContribution(e:FormEvent) {
+    e.preventDefault();setError('');
+    const cents=parseBRLToCents(amount);
+    if(!cents){setError('Informe um valor válido maior que zero.');return;}
+    if(!supabase)return;
+    const contributionDate = todaySaoPaulo();
+    const normalizedNote = note.trim() || null;
+    const signature = JSON.stringify({ goalId: goal.id, cents, note: normalizedNote, date: contributionDate });
+    if (!pendingContribution.current || pendingContribution.current.signature !== signature) {
+      pendingContribution.current = { signature, key: crypto.randomUUID() };
+    }
+    setBusy(true);
+    try {
+      const {error:rpcError}=await supabase.rpc('add_goal_contribution',{p_goal_id:goal.id,p_amount_cents:cents,p_note:normalizedNote,p_contribution_date:contributionDate,p_idempotency_key:pendingContribution.current.key});
+      if(rpcError)setError('Não foi possível confirmar o registro. Se a conexão falhou, tente novamente sem alterar os dados para evitar duplicidade.');
+      else {pendingContribution.current=null;setAmount('');setNote('');setAdding(false);onRefresh();}
+    } catch {
+      setError('A conexão foi interrompida. Tente novamente com os mesmos dados para confirmar o registro sem duplicá-lo.');
+    } finally { setBusy(false); }
   }
- m{ valueprin; label: s) coni=><rthDati{usercame="f}={e=>setCame="f}in;.p() {}b"rthDatclarat,endsnha<input type="Q/div>
-instruon>
-  ar unir??front"></div><divney-e} on>Você eR$"><Targee} onCnt="Valmo de (e.target.value)}  Caixiwnimo de 8 caracteres" minLengt <div cl" e} onM/${toonvimalmar nova senhaName="<input type="Pton  ci>
-    <(petiç�s)te} onChange={e=>setBirthDdtarget.value)} requir<small className="fielmia} t';
-import ty(t}enha<input type="Chatiodentif(petiç�s)tveTa<divetBirthDdration_day}et.value)} requir<ration_daywnimo de 8 caracteres" minLengtCtri/main>oucra <bra me]);
-<em>ht se_axnew-pass500}enha<input type= className="eteckboxow">{nee} onChange=eteckbox"ls();
-ualiisas'} oRet.value)} requirIsas'} ownimo de 8s();
-ua)n className={`nr menorton classoons movuntos "alert alisas'} o&&ap necessária para aplicaa.</dias mcadagatsetaine setSucista em depoi (datponen ">nize  :'Vamos === 'c={1 Challeng<Tpena/dou.'}oje.eTad icon={<Target/>};gar osamente o naseç�ShowCreate(fv></pl}lert-e&&as">{message}</d<button className="button button-pw"><Link to="/recum-pill"><sparimary utton-primary button-full" onClick={()=ghostio')}>Ver t} onCre}>Csta.lcoarem ${activeTab==='desafio()=>setShowCreate(true)}.':'Atualizar senha'} <ttonRight siztton><div clasn>
-    <p className="a6div className="page-on Dashboard({ us = {
-  idex conartilhad App;
+  return <article className="goal-card"><div className="goal-card-top"><span className="category-tag">{categories.find(c=>c.value===goal.category)?.label??'Outros'}</span><span className="goal-status">{goal.is_shared?'Compartilhada':goal.status==='active'?'Em andamento':goal.status}</span></div><div className="goal-art"><div className="goal-art-orbit"></div><Target size={35}/></div><h3>{goal.name}</h3><p className="goal-description">{goal.description||'Um sonho que está ganhando forma.'}</p><div className="goal-values"><div><small>Valor declarado</small><strong>{formatBRL(goal.saved_cents)}</strong></div><div className="align-right"><small>Objetivo</small><strong>{formatBRL(goal.target_cents)}</strong></div></div><div className="progress-track"><div className="progress-fill" style={{width:`${percent}%`}}></div></div><div className="goal-progress-foot"><b>{percent.toFixed(0)}% alcançado</b><span>Faltam {formatBRL(Math.max(0,goal.target_cents-goal.saved_cents))}</span></div>
+    {goal.is_shared && goal.owner_id===userId && <div className="share-actions"><button className="add-contribution" type="button" onClick={createInvite} disabled={sharing}><Users size={16}/>{sharing?'Gerando link...':'Convidar participante'}</button>{shareMessage&&<small className="field-help">{shareMessage}</small>}</div>}
+    {adding ? <form className="contribution-form" onSubmit={addContribution}><label>Quanto você reservou?<input value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Ex.: 150,00" inputMode="decimal" required/></label><label>Observação (opcional)<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Ex.: reserva deste mês"/></label>{error&&<div className="inline-error">{error}</div>}<div className="form-actions"><button type="button" className="button button-ghost" onClick={()=>setAdding(false)}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy?'Salvando...':'Registrar valor'}</button></div></form> : <button className="add-contribution" onClick={()=>setAdding(true)}><Plus size={16}/> Registrar contribuição</button>}
+  </article>;
+}
+
+function CreateGoalModal({userId,defaultShared=false,onClose,onCreated}:{userId:string;defaultShared?:boolean;onClose:()=>void;onCreated:()=>void}) {
+  const [name,setName]=useState('');
+  const [category,setCategory]=useState<GoalCategory>('outros');
+  const [target,setTarget]=useState('');
+  const [date,setDate]=useState('');
+  const [description,setDescription]=useState('');
+  const [isShared,setIsShared]=useState(defaultShared);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  async function submit(e:FormEvent) {
+    e.preventDefault();setError('');
+    const cents=parseBRLToCents(target);
+    if(!cents){setError('Informe um valor desejado válido.');return;}
+    if(!supabase){setError('Supabase não configurado.');return;}
+    setBusy(true);
+    const {error:insertError}=await supabase.from('goals').insert({owner_id:userId,name:name.trim(),category,target_cents:cents,target_date:date||null,description:description.trim()||null,status:'active',is_shared:isShared});
+    if(insertError)setError(insertError.message);
+    else onCreated();
+    setBusy(false);
+  }
+  return <div className="modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="create-title"><div className="modal-heading"><div><span className="eyebrow">UMA NOVA CONQUISTA</span><h2 id="create-title">Criar Caixinha</h2><p>Defina seu objetivo. O primeiro passo é seu.</p></div><button className="icon-button" onClick={onClose} aria-label="Fechar"><X/></button></div><form onSubmit={submit}><label>Nome do sonho<input value={name} onChange={e=>setName(e.target.value)} placeholder="Ex.: Minha viagem para o Nordeste" maxLength={80} required/></label><label>Categoria<select value={category} onChange={e=>setCategory(e.target.value as GoalCategory)}>{categories.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select></label><label>Quanto você deseja reunir?<div className="money-input"><span>R$</span><input value={target} onChange={e=>setTarget(e.target.value)} placeholder="5.000,00" inputMode="decimal" required/></div></label><label>Prazo desejado (opcional)<input type="date" value={date} onChange={e=>setDate(e.target.value)} min={todaySaoPaulo()}/></label><label>Descrição (opcional)<textarea value={description} onChange={e=>setDescription(e.target.value)} placeholder="Conte um pouco sobre esse sonho..." maxLength={500}/></label><label className="checkbox-row"><input type="checkbox" checked={isShared} onChange={e=>setIsShared(e.target.checked)}/> Compartilhar esta meta com outras pessoas</label>{isShared&&<p className="field-help">Você poderá gerar um link de convite depois de criar a meta. Cada participante registra apenas suas próprias contribuições; o progresso total é compartilhado.</p>}{error&&<div className="alert alert-error">{error}</div>}<div className="form-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy?'Criando...':'Criar Caixinha'} <ArrowRight size={16}/></button></div></form></section></div>;
+}
+
+export default App;
