@@ -36,7 +36,7 @@ jobs:
         run: npx --yes supabase@latest init
 
       - name: Start isolated local Supabase
-        run: npx --yes supabase@latest start -x studio,mailpit,edge-runtime,logflare,vector,postgres-meta
+        run: npx --yes supabase@latest start -x studio,edge-runtime,logflare,vector,postgres-meta
 
       - name: Apply all migrations to disposable local database
         run: npx --yes supabase@latest db reset
