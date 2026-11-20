@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/**"
+      - "scripts/**"
       - ".github/workflows/supabase-local-test.yml"
   workflow_dispatch:
 
