@@ -1,0 +1,42 @@
+name: Supabase local migration test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/supabase-local-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-local-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migration-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Initialize local Supabase config
+        run: npx --yes supabase@latest init
+
+      - name: Start isolated local Supabase
+        run: npx --yes supabase@latest start -x studio,mailpit,edge-runtime,logflare,vector,postgres-meta
+
+      - name: Apply all migrations to disposable local database
+        run: npx --yes supabase@latest db reset
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx --yes supabase@latest stop --no-backup || true
