@@ -107,11 +107,9 @@ for (const email of identities) {
       }
       if (!recoveryMessage) await new Promise(resolve => setTimeout(resolve, 500));
     }
-    if (!recoveryMessage) await new Promise(resolve => setTimeout(resolve, 500));
-    }
     if (!recoveryMessage) throw new Error(`password recovery email was not delivered to local Mailpit for ${email}`);
 
-    const urlMatch = recoveryMessage.match(/https?:\\/\\/[^\\s"'<>]+/g)?.find(value => value.includes('type=recovery'));
+    const urlMatch = recoveryMessage.match(/https?:\/\/[^\s"'<>]+/g)?.find(value => value.includes('type=recovery'));
     if (!urlMatch) throw new Error(`recovery link not found in local email for ${email}`);
     const recoveryUrl = new URL(urlMatch.replace(/&amp;/g, '&'));
     const tokenHash = recoveryUrl.searchParams.get('token_hash') ?? recoveryUrl.searchParams.get('token');
