@@ -37,6 +37,14 @@ jobs:
           npm view workbox-build version
           echo "Latest vite-plugin-pwa:"
           npm view vite-plugin-pwa version
+      - name: Test patched transitive versions in an isolated candidate
+        run: |
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.overrides={...(p.overrides||{}),glob:'^14.0.6',minimatch:'^11.0.9'}; fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n')"
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci
+          npm run build
+          npm audit --json > npm-audit-candidate.json || true
+          node -e "const r=require('./npm-audit-candidate.json'); const v=r.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify(v,null,2)); if ((v.total ?? 0) > 0) process.exit(1)"
       - name: Generate complete npm audit report
         run: |
           npm audit --json > npm-audit-report.json || true
@@ -48,5 +56,8 @@ jobs:
           name: mymetas-npm-audit-diagnostics
           path: |
             npm-audit-report.json
+            package.json
+            package-lock.json
+            npm-audit-candidate.json
           if-no-files-found: ignore
           retention-days: 14
