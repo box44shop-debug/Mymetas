@@ -38,6 +38,13 @@ jobs:
       - name: Apply all migrations to disposable local database
         run: npx --yes supabase@latest db reset
 
+      - name: Verify signup, login, session and password update with test identities
+        run: |
+          set -a
+          . <(npx --yes supabase@latest status -o env)
+          set +a
+          node scripts/test-auth-flow.mjs
+
       - name: Verify concurrent invite creation limit
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
