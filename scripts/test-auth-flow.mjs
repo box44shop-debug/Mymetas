@@ -78,6 +78,62 @@ for (const email of identities) {
       throw new Error(`login with updated password failed for ${email}: ${reloginError?.message ?? 'session/user mismatch'}`);
     }
 
+
+    await client.auth.signOut();
+    const { error: recoveryError } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: 'http://localhost:4173/redefinir-senha'
+    });
+    if (recoveryError) throw new Error(`password recovery request failed for ${email}: ${recoveryError.message}`);
+
+    const mailpit = 'http://127.0.0.1:54324/api/v1';
+    let recoveryMessage;
+    for (let attempt = 0; attempt < 20 && !recoveryMessage; attempt += 1) {
+      const listResponse = await fetch(`${mailpit}/messages?limit=100`);
+      if (!listResponse.ok) throw new Error(`Mailpit API returned ${listResponse.status}`);
+      const list = await listResponse.json();
+      for (const message of list.messages ?? []) {
+        const detailResponse = await fetch(`${mailpit}/message/${encodeURIComponent(message.ID)}`);
+        if (!detailResponse.ok) continue;
+        const detail = await detailResponse.json();
+        const content = `${detail.Text ?? ''}\\n${detail.HTML ?? ''}`.replace(/&amp;/g, '&');
+        if (content.includes('type=recovery') && content.includes(email)) {
+          recoveryMessage = content;
+          break;
+        }
+      }
+      if (!recoveryMessage) await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    if (!recoveryMessage) throw new Error(`password recovery email was not delivered to local Mailpit for ${email}`);
+
+    const urlMatch = recoveryMessage.match(/https?:\\/\\/[^\\s"'<>]+/g)?.find(value => value.includes('type=recovery'));
+    if (!urlMatch) throw new Error(`recovery link not found in local email for ${email}`);
+    const recoveryUrl = new URL(urlMatch.replace(/&amp;/g, '&'));
+    const tokenHash = recoveryUrl.searchParams.get('token_hash') ?? recoveryUrl.searchParams.get('token');
+    if (!tokenHash) throw new Error(`recovery token not found in email link for ${email}`);
+
+    const { data: verifiedRecovery, error: verifyRecoveryError } = await client.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'recovery'
+    });
+    if (verifyRecoveryError || verifiedRecovery.user?.id !== userId || !verifiedRecovery.session) {
+      throw new Error(`recovery link verification failed for ${email}: ${verifyRecoveryError?.message ?? 'session/user mismatch'}`);
+    }
+
+    const recoveryPassword = `Recovered-${randomBytes(18).toString('hex')}!`;
+    const { error: recoveryUpdateError } = await client.auth.updateUser({ password: recoveryPassword });
+    if (recoveryUpdateError) throw new Error(`password reset update failed for ${email}: ${recoveryUpdateError.message}`);
+
+    await client.auth.signOut();
+    const { data: recoveryLogin, error: recoveryLoginError } = await client.auth.signInWithPassword({
+      email,
+      password: recoveryPassword
+    });
+    if (recoveryLoginError || recoveryLogin.user?.id !== userId || !recoveryLogin.session) {
+      throw new Error(`login after email password recovery failed for ${email}: ${recoveryLoginError?.message ?? 'session/user mismatch'}`);
+    }
+
+    console.log(`PASS email password recovery and reset: ${email}`);
+
     console.log(`PASS auth signup/login/session/password-update: ${email}`);
   } finally {
     await client.auth.signOut();
