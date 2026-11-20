@@ -28,8 +28,8 @@ jobs:
           node -e "const l=require('./package-lock.json'); for (const [p,v] of Object.entries(l.packages||{})) if (/(^|\\/)node_modules\\/(glob|minimatch|workbox-build)$/.test(p)) console.log(p, v.version)"
       - name: Preview non-breaking security fixes (dry run)
         run: |
-          npm audit fix --dry-run --json > npm-audit-fix-plan.json || true
-          node -e "const r=require('./npm-audit-fix-plan.json'); console.log(JSON.stringify({added:r.added,removed:r.removed,changed:r.changed,audit:r.audit?.metadata?.vulnerabilities},null,2))"
+          npm audit fix --dry-run > npm-audit-fix-plan.txt 2>&1 || true
+          cat npm-audit-fix-plan.txt
       - name: Run npm audit
         run: |
           npm audit --json > npm-audit-report.json || true
@@ -38,6 +38,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mymetas-npm-audit
-          path: npm-audit-report.json\n            npm-audit-fix-plan.json
+          path: npm-audit-report.json\n            npm-audit-fix-plan.txt
           if-no-files-found: error
           retention-days: 14
