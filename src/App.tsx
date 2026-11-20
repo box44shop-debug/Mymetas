@@ -197,7 +197,11 @@ function AuthPage({ mode, redirectTo = '/' }: { mode: 'login' | 'signup'; redire
       if (signup) {
         const { data, error: authError } = await supabase.auth.signUp({
           email, password,
-          options: { data: { birth_date: birthDate } }
+          options: {
+            data: { birth_date: birthDate },
+            // Return the confirmation link to the exact environment where signup began.
+            emailRedirectTo: `${window.location.origin}/`
+          }
         });
         if (authError) throw authError;
         if (data.session) navigate(redirectTo);
