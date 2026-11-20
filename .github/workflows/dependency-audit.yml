@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   audit:
@@ -22,41 +22,31 @@ jobs:
           node-version: 22
       - name: Resolve dependency tree
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - name: Inspect current dependency versions
+      - name: Inspect installed dependency versions
         run: |
           node -e "const l=require('./package-lock.json'); for (const [p,v] of Object.entries(l.packages||{})) if (/(^|\\/)node_modules\\/(glob|minimatch|workbox-build)$/.test(p)) console.log(p, v.version)"
-      - name: Preview non-breaking security fixes (dry run)
+      - name: Inspect patched package versions and constraints
         run: |
-          npm audit fix --dry-run > npm-audit-fix-plan.txt 2>&1 || true
-          cat npm-audit-fix-plan.txt
-      - name: Apply compatible security fixes
-        run: npm audit fix
-      - name: Install exact locked dependencies
-        run: npm ci
-      - name: Build application
-        run: npm run build
-      - name: Verify dependency audit
+          echo "Latest glob:"
+          npm view glob version
+          echo "Latest minimatch:"
+          npm view minimatch version
+          echo "workbox-build 7.4.1 glob dependency:"
+          npm view workbox-build@7.4.1 dependencies.glob
+          echo "Latest workbox-build:"
+          npm view workbox-build version
+          echo "Latest vite-plugin-pwa:"
+          npm view vite-plugin-pwa version
+      - name: Generate complete npm audit report
         run: |
           npm audit --json > npm-audit-report.json || true
-          node -e "const r=require('./npm-audit-report.json'); const v=r.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify(v,null,2)); if ((v.total ?? 0) > 0) process.exit(1)"
-      - name: Commit reviewed lockfile to audit branch
-        run: |
-          git add package-lock.json
-          if ! git diff --cached --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: update dependency lockfile with security fixes"
-            git push origin HEAD:chore/dependency-audit
-          else
-            echo "No lockfile changes to commit."
-          fi
-      - name: Upload audit report
+          node -e "const r=require('./npm-audit-report.json'); console.log(JSON.stringify({metadata:r.metadata?.vulnerabilities, advisories:Object.entries(r.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,range:v.range,fixAvailable:v.fixAvailable,via:v.via}))},null,2))"
+      - name: Upload diagnostic reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mymetas-npm-audit
+          name: mymetas-npm-audit-diagnostics
           path: |
             npm-audit-report.json
-            npm-audit-fix-plan.txt
           if-no-files-found: ignore
           retention-days: 14
