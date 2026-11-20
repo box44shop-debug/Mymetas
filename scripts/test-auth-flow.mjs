@@ -85,25 +85,22 @@ for (const email of identities) {
     });
     if (recoveryError) throw new Error(`password recovery request failed for ${email}: ${recoveryError.message}`);
 
-    const inbucket = 'http://127.0.0.1:54324/api/v1';
-    const mailbox = email.split('@')[0];
+    const mailpit = 'http://127.0.0.1:54324/api/v1';
     let recoveryMessage;
     for (let attempt = 0; attempt < 20 && !recoveryMessage; attempt += 1) {
-      const listResponse = await fetch(`${inbucket}/mailbox/${encodeURIComponent(mailbox)}`);
-      if (!listResponse.ok) throw new Error(`Inbucket API returned ${listResponse.status}`);
+      const listResponse = await fetch(`${mailpit}/messages?start=0&limit=100`);
+      if (!listResponse.ok) throw new Error(`Mailpit API returned ${listResponse.status}`);
       const list = await listResponse.json();
-      const messages = Array.isArray(list) ? list : (list.messages ?? []);
-      for (const message of messages) {
-        const messageId = message.id ?? message.ID;
+      for (const message of (list.messages ?? [])) {
+        const recipients = (message.To ?? []).map((recipient) => recipient.Address?.toLowerCase());
+        if (!recipients.includes(email.toLowerCase())) continue;
+        const messageId = message.ID ?? message.id;
         if (!messageId) continue;
-        const detailResponse = await fetch(`${inbucket}/mailbox/${encodeURIComponent(mailbox)}/${encodeURIComponent(messageId)}`);
+        const detailResponse = await fetch(`${mailpit}/message/${encodeURIComponent(messageId)}`);
         if (!detailResponse.ok) continue;
         const detail = await detailResponse.json();
-        const content = `${detail.text ?? detail.Text ?? ''}\\n${detail.html ?? detail.HTML ?? ''}`.replace(/&amp;/g, '&');
-        if (content.includes('type=recovery')) {
-          recoveryMessage = content;
-          break;
-        }
+        const content = `${detail.Text ?? ''}\n${detail.HTML ?? ''}`.replace(/&amp;/g, '&');
+        if (content.includes('type=recovery')) { recoveryMessage = content; break; }
       }
       if (!recoveryMessage) await new Promise(resolve => setTimeout(resolve, 500));
     }
