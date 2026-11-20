@@ -112,8 +112,17 @@ if (acceptError || acceptedGoalId !== sharedGoalId) {
   throw new Error(`invite acceptance failed: ${acceptError?.message ?? 'goal id mismatch'}`);
 }
 
-const { error: reusedInviteError } = await member.rpc('accept_goal_invite', { p_token: inviteToken });
-assert(Boolean(reusedInviteError), 'a used invite must not be accepted twice');
+const { data: repeatedAcceptedGoalId, error: repeatedAcceptError } = await member.rpc('accept_goal_invite', { p_token: inviteToken });
+if (repeatedAcceptError || repeatedAcceptedGoalId !== sharedGoalId) {
+  throw new Error(`same-user invite retry must be idempotent: ${repeatedAcceptError?.message ?? 'goal id mismatch'}`);
+}
+const { data: inviteRows, error: inviteRowsError } = await admin
+  .from('goal_invites')
+  .select('id,used_at,accepted_by')
+  .eq('goal_id', sharedGoalId);
+if (inviteRowsError) throw new Error(`invite audit query failed: ${inviteRowsError.message}`);
+assert(inviteRows?.length === 1 && inviteRows[0].used_at && inviteRows[0].accepted_by === second.userId,
+  'repeated acceptance must not create extra invite consumption records');
 
 const memberContributionKey = randomUUID();
 const { error: memberContributionError } = await member.rpc('add_goal_contribution', {
