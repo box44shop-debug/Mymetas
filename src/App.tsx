@@ -349,10 +349,10 @@ function ChallengesPanel({ userId }: { userId: string }) {
     <div className="challenge-intro"><div><span className="eyebrow">SEU RITMO, SUA CONQUISTA</span><h2>Pequenos passos, grandes avanços.</h2><p>Escolha desafios simples para manter a constância. Participar é opcional e não exige depósitos nem movimentação de dinheiro.</p></div><div className="achievement-counter"><Trophy size={21}/><strong>{completed.length}</strong><span>conquistas</span></div></div>
     {error && <div className="alert alert-error">{error} <button onClick={() => void load()}>Tentar novamente</button></div>}
     {notice && <div className="alert alert-success">{notice}</div>}
-    {active.length > 0 && <><div className="challenge-section-title"><h3>Em andamento</h3><span>{active.length} desafio(s)</span></div><div className="challenge-grid">{definitions.filter(d => active.some(p => p.challenge_id === d.id)).map(card)}</div></>}
+    {active.length > 0 && <><div className="challenge-section-title"><h3>Em andamento</h3><span>{active.length} desafio(s)</span></div><div className="challenge-grid">{active.map(card)}</div></>}
     {available.length > 0 && <><div className="challenge-section-title"><h3>Desafios disponíveis</h3><span>Escolha quando começar</span></div><div className="challenge-grid">{available.map(card)}</div></>}
     {completed.length > 0 && <><div className="challenge-section-title"><h3>Suas conquistas</h3><span>{completed.length} concluída(s)</span></div><div className="challenge-grid">{definitions.filter(d => byChallenge.get(d.id)?.status === 'completed').map(card)}</div></>}
-    {expired.length > 0 && <><div className="challenge-section-title"><h3>Desafios encerrados</h3><span>O aprendizado continua</span></div><div className="challenge-grid">{definitions.filter(d => expired.some(p => p.challenge_id === d.id)).map(card)}</div></>}
+    {expired.length > 0 && <><div className="challenge-section-title"><h3>Desafios encerrados</h3><span>O aprendizado continua</span></div><div className="challenge-grid">{expired.map(card)}</div></>}
     <div className="challenge-disclaimer"><ShieldCheck size={16}/><span>Os desafios acompanham apenas registros feitos no Metas.com.br. Não medem saldo bancário, não verificam depósitos e não oferecem prêmios em dinheiro.</span></div>
   </section>;
 }
